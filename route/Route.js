@@ -5,7 +5,7 @@
  * @Project: one_server
  * @Filename: Route.js
  * @Last modified by:   mymac
- * @Last modified time: 2017-11-26T18:51:18+08:00
+ * @Last modified time: 2017-12-03T15:37:47+08:00
  */
  var express = require('express');
  var dateFormat = require('dateformat');
@@ -33,8 +33,8 @@
  router.use(bodyParser.json());                                     // parse application/json
  router.use(bodyParser.urlencoded({'extended':'true'}));            // parse application/x-www-form-urlencoded
 
- var InviteModel = require("../models/invite");
- var PortfolioModel = require("../models/portfolio");
+ var InviteModel = require("../models/Invite");
+ var PortfolioModel = require("../models/Portfolio");
  //Middle ware that is specific to this router
 router.use(function timeLog(req, res, next) {
   console.log('#################Welcome to server of njbsbhgtcdsxqh!######################')
@@ -46,8 +46,10 @@ router.use(function timeLog(req, res, next) {
 
 //image files realted
 router.post('/api/upload/image', upload.single('file'), function(req, res, next) {
+  console.log('__dirname: ' + __dirname);
   var filePath = __dirname + '/../imageuploaded/'
   var logoPath = __dirname + '/../assets/imgs/logo.png'
+  //this static path for img will also need to be configured in nginx.confg
   var file= filePath + req.file.filename
   Jimp.read(file).then(function (img) {
       Jimp.read(logoPath).then(function(logoImg){
@@ -55,12 +57,16 @@ router.post('/api/upload/image', upload.single('file'), function(req, res, next)
            .quality(60)                 // set JPEG quality
            .composite(logoImg, 360 , 10)
            .write(file); // save
+          var imgFile = 'https://www.takeiteasydude.com/img/' + req.file.filename
+          var width = img.bitmap.width
+          var height = img.bitmap.height
+          var reply = { img: { url: imgFile, width: width, height: height} }
+          res.json(reply)
        })
     }).catch(function (err) {
        console.error(err);
+       res.send('fail to manipulate image')
    });
-  var reply = { img: file}
-  res.json(reply)
 })
 
 //router
@@ -81,6 +87,7 @@ router.post('/api/newportfolio', function(req, res) {
   var now = new Date();
    now = dateFormat(now, "dddd, mmmm dS, yyyy, h:MM:ss TT")
    var data = req.body.pack;
+   var invitecode = data.invitecode;
    var portfolioEntity = new PortfolioModel({
      imgurls: data.imgUrls,
      nickname: data.nickname,
@@ -104,6 +111,10 @@ router.post('/api/newportfolio', function(req, res) {
    })
    portfolioEntity.save(function(err, docs){
        if(err) console.log(err);
+       console.log('invitecode: ' + invitecode);
+       InviteModel.findOneAndUpdate({'invitecode': invitecode}, {'available': false}, function(err){
+           if (err) return console.log(err);
+         })
        console.log('blog保存成功：' + docs);
        res.send({success: true})
    })

@@ -5,14 +5,18 @@
  * @Project: one_server
  * @Filename: Blog.js
  * @Last modified by:   mymac
- * @Last modified time: 2017-11-26T16:30:48+08:00
+ * @Last modified time: 2017-12-03T14:51:49+08:00
  */
  var mongoose = require('mongoose');
  var Schema = mongoose.Schema;
  const ObjectId = mongoose.Schema.Types.ObjectId
 
  var portfolioSchema = new Schema({
-      imgurls: [{ type: String, default: ''}],
+      imgurls: [{
+        url: {type: String, default: ''},
+        width: {type: Number, default: 0},
+        height: {type: Number, default: 0}
+      }],
       nickname: { type: String, default: ''},
       selfintro: { type: String, default: ''},
       gender: { type: String, default: ''},
